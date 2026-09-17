@@ -100,7 +100,7 @@ export default function App() {
   };
 
   const handleResetDemo = () => {
-    if (window.confirm('Reset seluruh data ke kondisi awal demo Kimia Organik?')) {
+    if (window.confirm('Reset seluruh data ke kondisi awal kelas PAI (Miftahul Fikriyah, S.Pd., M.Si.)?')) {
       storageService.resetToDemo();
       loadData();
       showToast('Data demo berhasil direset ke kondisi awal.');
@@ -154,12 +154,12 @@ export default function App() {
       <div className="bg-slate-900/90 text-slate-300 text-[11px] px-4 py-1.5 border-b border-slate-800 flex items-center justify-between overflow-x-auto">
         <div className="flex items-center gap-2 shrink-0">
           <span className="font-mono text-emerald-400 font-bold uppercase text-[10px]">
-            Mode Cepat Demo:
+            Mode Cepat Demo Mahasiswa:
           </span>
           <button
             type="button"
             onClick={() => {
-              const grp = storageService.getGroupByRoomCode('KIM-7AX29') || storageService.getGroups()[0];
+              const grp = storageService.getGroupByRoomCode('DEMO-7AX29') || storageService.getGroups()[0];
               if (grp) {
                 const fikri =
                   storageService.getStudentById('std-fikri') ||
@@ -170,16 +170,16 @@ export default function App() {
             }}
             className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${
               currentStudent?.id === 'std-2' || currentStudent?.id === 'std-fikri'
-                ? 'bg-blue-600 text-white font-bold'
+                ? 'bg-emerald-600 text-white font-bold'
                 : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
             }`}
           >
-            Mahasiswa (Fikri)
+            Mahasiswa (Fikri - Kelas DEMO)
           </button>
           <button
             type="button"
             onClick={() => {
-              const grp = storageService.getGroupByRoomCode('KIM-7AX29') || storageService.getGroups()[0];
+              const grp = storageService.getGroupByRoomCode('DEMO-7AX29') || storageService.getGroups()[0];
               if (grp) {
                 const aisyah =
                   storageService.getStudentById('std-aisyah') ||
@@ -190,16 +190,16 @@ export default function App() {
             }}
             className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${
               currentStudent?.id === 'std-1' || currentStudent?.id === 'std-aisyah'
-                ? 'bg-blue-600 text-white font-bold'
+                ? 'bg-emerald-600 text-white font-bold'
                 : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
             }`}
           >
-            Mahasiswa (Aisyah)
+            Mahasiswa (Aisyah - Kelas DEMO)
           </button>
           <button
             type="button"
             onClick={() => {
-              const grp = storageService.getGroupByRoomCode('KIM-7AX29') || storageService.getGroups()[0];
+              const grp = storageService.getGroupByRoomCode('DEMO-7AX29') || storageService.getGroups()[0];
               if (grp) {
                 const ismi =
                   storageService.getStudentById('std-ismi') ||
@@ -210,33 +210,35 @@ export default function App() {
             }}
             className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${
               currentStudent?.id === 'std-3' || currentStudent?.id === 'std-ismi'
-                ? 'bg-blue-600 text-white font-bold'
-                : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
-            }`}
-          >
-            Mahasiswa (Ismi)
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              handleLecturerLoginSuccess({
-                id: 'lec-1',
-                username: 'dosen',
-                name: 'Prof. Dr. Ir. Hendra Gunawan, M.Sc.',
-              });
-            }}
-            className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${
-              currentRole === 'lecturer'
                 ? 'bg-emerald-600 text-white font-bold'
                 : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
             }`}
           >
-            Dosen Pengampu
+            Mahasiswa (Ismi - Kelas DEMO)
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (currentRole === 'lecturer') {
+                setActiveTab('lecturer-dashboard');
+              } else {
+                setIsLecturerModalOpen(true);
+              }
+            }}
+            className={`px-2.5 py-0.5 rounded cursor-pointer transition-colors flex items-center gap-1 ${
+              currentRole === 'lecturer'
+                ? 'bg-emerald-600 text-white font-bold'
+                : 'bg-slate-800 hover:bg-slate-700 text-emerald-300 font-semibold'
+            }`}
+            title="Wajib verifikasi password dosen rahasia"
+          >
+            <span>🔒</span>
+            <span>{currentRole === 'lecturer' ? 'Portal Dosen (Aktif)' : 'Login Dosen (Perlu Password)'}</span>
           </button>
         </div>
 
         <div className="text-[10px] text-slate-400 shrink-0 ml-4 hidden sm:block">
-          Sistem Latihan Bertahap &bull; Bebas AI Suara &bull; Penilaian Reflektif & Peer-Assessment
+          Dosen: Miftahul Fikriyah, S.Pd., M.Si. &bull; Kelas: PAI AL 5, PAI AL 3, PAI AL 2, Kelas Uji Coba, Kelas DEMO
         </div>
       </div>
 
@@ -247,20 +249,6 @@ export default function App() {
           <LandingPage
             onSelectStudent={() => setIsStudentModalOpen(true)}
             onSelectLecturer={() => setIsLecturerModalOpen(true)}
-            onQuickDemoStudent={(studentId, groupCode) => {
-              const grp = storageService.getGroupByRoomCode(groupCode);
-              const st = storageService.getStudentById(studentId);
-              if (grp && st) {
-                handleStudentLoginSuccess(st, grp);
-              }
-            }}
-            onQuickDemoLecturer={() => {
-              handleLecturerLoginSuccess({
-                id: 'lec-1',
-                username: 'dosen',
-                name: 'Prof. Dr. Ir. Hendra Gunawan, M.Sc.',
-              });
-            }}
           />
         )}
 
@@ -311,10 +299,11 @@ export default function App() {
                 {currentMeeting ? (
                   <Latihan1Form
                     student={currentStudent}
+                    group={currentGroup || undefined}
                     meeting={currentMeeting}
                     questions={questions}
                     onSaveSuccess={() => {
-                      showToast('Latihan 1 Mandiri berhasil disimpan!');
+                      showToast('Latihan 1 berhasil disimpan!');
                     }}
                     onNextStage={() => setActiveTab('latihan2')}
                   />
@@ -415,7 +404,13 @@ export default function App() {
               meetings={meetings}
               selectedClassId={selectedClassId}
               selectedMeetingId={selectedMeetingId}
-              onSelectClass={(id) => setSelectedClassId(id)}
+              onSelectClass={(id) => {
+                setSelectedClassId(id);
+                const classMts = storageService.getMeetingsByClassId(id);
+                if (classMts.length > 0) {
+                  setSelectedMeetingId(classMts[0].id);
+                }
+              }}
               onSelectMeeting={(id) => setSelectedMeetingId(id)}
             />
           </div>

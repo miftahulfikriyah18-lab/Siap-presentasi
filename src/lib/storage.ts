@@ -2,6 +2,7 @@ import {
   ClassItem,
   Group,
   Student,
+  Lecturer,
   Assignment,
   ScaffoldingQuestion,
   Meeting,
@@ -26,7 +27,8 @@ const STORAGE_KEYS = {
   PEER_ASSESSMENTS: 'siap_pres_peer_assessments',
   GROUP_EVIDENCE: 'siap_pres_group_evidence',
   FINAL_REFLECTIONS: 'siap_pres_final_reflections',
-  INITIALIZED: 'siap_pres_initialized_v2',
+  LECTURER_PASSWORD: 'siap_pres_lecturer_pwd',
+  INITIALIZED: 'siap_pres_initialized_v5_demo_clean',
 };
 
 // URL validation helper for Google Drive
@@ -74,43 +76,80 @@ function setItem<T>(key: string, value: T): void {
 
 // Initial demo data seed
 export function seedInitialData(force = false) {
-  if (!force && localStorage.getItem(STORAGE_KEYS.INITIALIZED)) {
+  // Check if force or not initialized with current schema version
+  const isInitialized = localStorage.getItem(STORAGE_KEYS.INITIALIZED) === 'true';
+  const existingClasses = getItem<ClassItem[]>(STORAGE_KEYS.CLASSES, []);
+  const hasOldSubject = existingClasses.some(
+    (c) => c?.name?.toLowerCase().includes('kimia') || c?.name?.toLowerCase().includes('farmasi')
+  );
+  const hasDemoClass = existingClasses.some(
+    (c) => c?.id === 'class-demo' || c?.name?.toLowerCase().includes('demo')
+  );
+  const hasUjiCobaClass = existingClasses.some(
+    (c) => c?.id === 'class-uji-coba' || c?.name?.toLowerCase().includes('uji coba')
+  );
+
+  if (!force && isInitialized && !hasOldSubject && hasDemoClass && hasUjiCobaClass && existingClasses.length > 0) {
     return;
   }
 
-  const defaultClassId = 'class-kimia-org';
-  const defaultAssignmentId = 'assign-1';
-  const defaultMeetingId = 'meeting-1';
-  const defaultGroupId = 'group-1';
+  const demoClassId = 'class-demo';
+  const paiAl5ClassId = 'class-pai-al5';
+  const paiAl3ClassId = 'class-pai-al3';
+  const paiAl2ClassId = 'class-pai-al2';
+  const ujiCobaClassId = 'class-uji-coba';
+
+  const defaultMeetingId = 'meeting-demo-1';
+  const defaultGroupId = 'group-demo-1';
 
   const classes: ClassItem[] = [
     {
-      id: defaultClassId,
-      name: 'Kimia Organik',
-      code: 'KIM-2024',
+      id: paiAl5ClassId,
+      name: 'PAI AL 5',
+      code: 'PAI-AL5',
       created_at: new Date().toISOString(),
     },
     {
-      id: 'class-biokimia',
-      name: 'Biokimia Farmasi',
-      code: 'BIO-2024',
+      id: paiAl3ClassId,
+      name: 'PAI AL 3',
+      code: 'PAI-AL3',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: paiAl2ClassId,
+      name: 'PAI AL 2',
+      code: 'PAI-AL2',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: ujiCobaClassId,
+      name: 'Kelas Uji Coba',
+      code: 'UJI-COBA',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: demoClassId,
+      name: 'Kelas DEMO',
+      code: 'DEMO',
       created_at: new Date().toISOString(),
     },
   ];
 
+  // Only the DEMO class has pre-seeded mock groups so features can be previewed.
+  // PAI AL 5, PAI AL 3, PAI AL 2, and Kelas Uji Coba start completely empty for students and testing.
   const groups: Group[] = [
     {
       id: defaultGroupId,
-      class_id: defaultClassId,
-      name: 'Kelompok 1',
-      room_code: 'KIM-7AX29',
+      class_id: demoClassId,
+      name: 'Kelompok 1 (Demo)',
+      room_code: 'DEMO-7AX29',
       created_at: new Date().toISOString(),
     },
     {
-      id: 'group-2',
-      class_id: defaultClassId,
-      name: 'Kelompok 2',
-      room_code: 'KIM-9BK44',
+      id: 'group-demo-2',
+      class_id: demoClassId,
+      name: 'Kelompok 2 (Demo)',
+      room_code: 'DEMO-9BK44',
       created_at: new Date().toISOString(),
     },
   ];
@@ -151,7 +190,7 @@ export function seedInitialData(force = false) {
     // Kelompok 2 students
     {
       id: 'std-ahmad',
-      group_id: 'group-2',
+      group_id: 'group-demo-2',
       name: 'Ahmad',
       pin: '1234',
       is_activated: true,
@@ -159,7 +198,7 @@ export function seedInitialData(force = false) {
     },
     {
       id: 'std-rina',
-      group_id: 'group-2',
+      group_id: 'group-demo-2',
       name: 'Rina',
       pin: '1234',
       is_activated: true,
@@ -167,7 +206,7 @@ export function seedInitialData(force = false) {
     },
     {
       id: 'std-budi',
-      group_id: 'group-2',
+      group_id: 'group-demo-2',
       name: 'Budi',
       pin: '1234',
       is_activated: true,
@@ -175,78 +214,59 @@ export function seedInitialData(force = false) {
     },
   ];
 
-  const assignments: Assignment[] = [
-    {
-      id: defaultAssignmentId,
-      class_id: defaultClassId,
-      title: 'Analisis Cemaran Benzena pada Produk Farmasi Cair',
-      case_text: `Sebuah industri farmasi menemukan indikasi adanya residu hidrokarbon aromatik benzena pada salah satu batch sediaan sirup analgetik yang menggunakan pelarut gliserol sintetik. Sebagai tim analis kimia organik dan penjaminan mutu, Anda diminta mempresentasikan analisis komprehensif mengenai kemungkinan rute kontaminasi, sifat karsinogenisitas senyawa aromatik dibandingkan hidrokarbon alifatik, serta metode eliminasi cemaran sesuai standar Farmakope Indonesia.`,
-      case_image: 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&w=800&q=80',
-      created_at: new Date().toISOString(),
-    },
+  const caseTextPAI = `Dalam konteks perkuliahan Pendidikan Agama Islam (PAI) di era transformasi digital, tim Anda diminta menganalisis studi kasus mengenai inovasi metode pembelajaran, penguatan nilai-nilai etika dan karakter religius, serta strategi penyampaian materi edukasi yang komunikatif bagi generasi muda. Rumuskan argumen secara sistematis, telaah rujukan ilmiah dan dalil yang relevan, serta sajikan rekomendasi solusi yang terstruktur untuk dipresentasikan di hadapan dosen pengampu (Miftahul Fikriyah, S.Pd., M.Si.) dan rekan sejawat.`;
+  const caseImagePAI = 'https://images.unsplash.com/photo-1532012164546-f432f2e3777a?auto=format&fit=crop&w=800&q=80';
+
+  const rawQuestions = [
+    'Bagaimana rumusan masalah utama pada studi kasus pembelajaran Pendidikan Agama Islam (PAI) yang kelompok Anda kaji?',
+    'Apa dasar landasan teori, nilai-nilai etika, maupun rujukan akademik yang melandasi analisis kelompok Anda?',
+    'Jelaskan dinamika permasalahan dan faktor penyebab yang terjadi di lingkungan masyarakat/kampus terkait kasus tersebut!',
+    'Metode pendekatan apa (misal: pembelajaran kontekstual, studi kasus, atau diskusi interaktif) yang paling efektif diterapkan?',
+    'Bagaimana strategi penyajian materi presentasi kelompok agar menarik, sistematis, dan mudah dipahami oleh audiens?',
+    'Apa tantangan atau pertanyaan kritis yang mungkin diajukan audiens/dosen pengampu, dan bagaimana antisipasi kelompok Anda?',
+    'Rekomendasi aplikatif dan kesimpulan apa yang kelompok Anda tawarkan sebagai solusi atas studi kasus ini?',
   ];
 
-  const questions: ScaffoldingQuestion[] = [
-    {
-      id: 'q-1',
-      assignment_id: defaultAssignmentId,
-      question_number: 1,
-      question_text: 'Bagaimana karakteristik struktur cincin benzena dan sifat stabilitas resonansinya dibandingkan alkena biasa?',
-    },
-    {
-      id: 'q-2',
-      assignment_id: defaultAssignmentId,
-      question_number: 2,
-      question_text: 'Jelaskan kemungkinan mekanisme timbulnya benzena dari dekomposisi bahan baku atau pelarut sintetik!',
-    },
-    {
-      id: 'q-3',
-      assignment_id: defaultAssignmentId,
-      question_number: 3,
-      question_text: 'Mengapa benzena memiliki profil toksisitas yang jauh lebih berbahaya dibandingkan toluena atau senyawa alkil benzena lain?',
-    },
-    {
-      id: 'q-4',
-      assignment_id: defaultAssignmentId,
-      question_number: 4,
-      question_text: 'Metode analisis spektroskopi atau kromatografi apa yang paling sensitif untuk mengonfirmasi keberadaan jejak benzena?',
-    },
-    {
-      id: 'q-5',
-      assignment_id: defaultAssignmentId,
-      question_number: 5,
-      question_text: 'Bagaimana prinsip pemisahan fisik-kimia (misal distilasi fraksionasi atau adsorpsi) untuk menghilangkan residu pelarut?',
-    },
-    {
-      id: 'q-6',
-      assignment_id: defaultAssignmentId,
-      question_number: 6,
-      question_text: 'Apa regulasi batas ambang cemaran benzena menurut ketentuan BPOM dan ICH Guidelines?',
-    },
-    {
-      id: 'q-7',
-      assignment_id: defaultAssignmentId,
-      question_number: 7,
-      question_text: 'Rekomendasi teknis apa yang Anda berikan kepada tim produksi agar masalah serupa tidak terulang kembali?',
-    },
-  ];
+  const assignments: Assignment[] = classes.map((c) => ({
+    id: `assign-${c.id}`,
+    class_id: c.id,
+    title: 'Analisis Kasus Metode Pembelajaran dan Penguatan Karakter Mahasiswa dalam PAI',
+    case_text: caseTextPAI,
+    case_image: caseImagePAI,
+    created_at: new Date().toISOString(),
+  }));
 
-  const meetings: Meeting[] = [
-    {
-      id: defaultMeetingId,
-      class_id: defaultClassId,
-      assignment_id: defaultAssignmentId,
-      meeting_number: 1,
-      title: 'Pertemuan 1: Presentasi Kasus Reaksi Senyawa Aromatik',
-    },
-    {
-      id: 'meeting-2',
-      class_id: defaultClassId,
-      assignment_id: defaultAssignmentId,
-      meeting_number: 2,
-      title: 'Pertemuan 2: Mekanisme Reaksi Substitusi Elektrofilik',
-    },
-  ];
+  const questions: ScaffoldingQuestion[] = [];
+  assignments.forEach((assign) => {
+    rawQuestions.forEach((qText, idx) => {
+      questions.push({
+        id: `q-${assign.id}-${idx + 1}`,
+        assignment_id: assign.id,
+        question_number: idx + 1,
+        question_text: qText,
+      });
+    });
+  });
+
+  const meetings: Meeting[] = [];
+  classes.forEach((c) => {
+    meetings.push(
+      {
+        id: c.id === demoClassId ? defaultMeetingId : `meeting-${c.id}-1`,
+        class_id: c.id,
+        assignment_id: `assign-${c.id}`,
+        meeting_number: 1,
+        title: 'Pertemuan 1: Presentasi Analisis Studi Kasus PAI',
+      },
+      {
+        id: c.id === demoClassId ? 'meeting-demo-2' : `meeting-${c.id}-2`,
+        class_id: c.id,
+        assignment_id: `assign-${c.id}`,
+        meeting_number: 2,
+        title: 'Pertemuan 2: Diskusi Tematik & Implementasi Pembelajaran PAI',
+      }
+    );
+  });
 
   // Pre-seed mock submissions to allow instant testing of all flows:
   // Aisyah: L1 complete, L2 complete, L3 complete -> SIAP PRESENTASI
@@ -385,6 +405,95 @@ export function seedInitialData(force = false) {
   ];
 
   const peerAssessments: PeerAssessment[] = [
+    // Latihan 1 Reviews (Peer review audio rekaman mandiri tanpa instrumen ketergantungan teks):
+    // Aisyah reviews Fikri, Ismi, Rafi for Latihan 1
+    {
+      id: 'pa-ais-to-fik-l1',
+      reviewer_student_id: 'std-aisyah',
+      presenter_student_id: 'std-fikri',
+      meeting_id: defaultMeetingId,
+      practice_number: 1,
+      fluency: 'cukup_lancar',
+      case_understanding: 'sudah_paham',
+      scaffolding_completion: 'hampir_seluruh',
+      clarity: 'jelas_runtut',
+      positive_feedback: 'Rekaman audio Latihan 1 Fikri sangat jelas, runut, dan intonasinya enak didengarkan.',
+      improvement_feedback: 'Bisa lebih ringkas pada bagian awal agar durasi audio lebih proporsional.',
+      created_at: new Date(Date.now() - 3600000 * 35).toISOString(),
+    },
+    {
+      id: 'pa-ais-to-ism-l1',
+      reviewer_student_id: 'std-aisyah',
+      presenter_student_id: 'std-ismi',
+      meeting_id: defaultMeetingId,
+      practice_number: 1,
+      fluency: 'beberapa_tersendat',
+      case_understanding: 'paham_sebagian',
+      scaffolding_completion: 'sebagian',
+      clarity: 'cukup_mudah',
+      positive_feedback: 'Suara rekaman cukup jernih dan poin pembuka dijelaskan dengan baik.',
+      improvement_feedback: 'Beberapa kali terdengar jeda panjang, bisa dilatih kelancarannya lagi.',
+      created_at: new Date(Date.now() - 3600000 * 35).toISOString(),
+    },
+    {
+      id: 'pa-ais-to-raf-l1',
+      reviewer_student_id: 'std-aisyah',
+      presenter_student_id: 'std-rafi',
+      meeting_id: defaultMeetingId,
+      practice_number: 1,
+      fluency: 'lancar_runtut',
+      case_understanding: 'sudah_paham',
+      scaffolding_completion: 'seluruh_terhubung',
+      clarity: 'jelas_runtut',
+      positive_feedback: 'Penjelasan audio sangat komprehensif, semua scaffolding dijawab dengan mantap.',
+      improvement_feedback: 'Tempo bicara sedikit diperlambat agar lebih mudah dicerna pendengar.',
+      created_at: new Date(Date.now() - 3600000 * 35).toISOString(),
+    },
+    // Fikri reviews Aisyah for Latihan 1
+    {
+      id: 'pa-fik-to-ais-l1',
+      reviewer_student_id: 'std-fikri',
+      presenter_student_id: 'std-aisyah',
+      meeting_id: defaultMeetingId,
+      practice_number: 1,
+      fluency: 'lancar_runtut',
+      case_understanding: 'paham_menghubungkan',
+      scaffolding_completion: 'seluruh_terhubung',
+      clarity: 'jelas_runtut',
+      positive_feedback: 'Luar biasa penguasaan materinya dalam rekaman audio mandiri.',
+      improvement_feedback: 'Pertahankan kualitas penjelasan audio ini untuk latihan kelompok.',
+      created_at: new Date(Date.now() - 3600000 * 34).toISOString(),
+    },
+    // Ismi reviews Aisyah for Latihan 1
+    {
+      id: 'pa-ism-to-ais-l1',
+      reviewer_student_id: 'std-ismi',
+      presenter_student_id: 'std-aisyah',
+      meeting_id: defaultMeetingId,
+      practice_number: 1,
+      fluency: 'lancar_runtut',
+      case_understanding: 'paham_menghubungkan',
+      scaffolding_completion: 'seluruh_terhubung',
+      clarity: 'jelas_runtut',
+      positive_feedback: 'Artikulasinya sangat jernih dan runtut menjawab pertanyaan.',
+      improvement_feedback: 'Sudah sangat baik sekali.',
+      created_at: new Date(Date.now() - 3600000 * 34).toISOString(),
+    },
+    // Rafi reviews Aisyah for Latihan 1
+    {
+      id: 'pa-raf-to-ais-l1',
+      reviewer_student_id: 'std-rafi',
+      presenter_student_id: 'std-aisyah',
+      meeting_id: defaultMeetingId,
+      practice_number: 1,
+      fluency: 'lancar_runtut',
+      case_understanding: 'sudah_paham',
+      scaffolding_completion: 'seluruh_terhubung',
+      clarity: 'jelas_runtut',
+      positive_feedback: 'Penjelasan kasus sangat kontekstual dan runtut.',
+      improvement_feedback: 'Siap lanjut ke Latihan 2.',
+      created_at: new Date(Date.now() - 3600000 * 34).toISOString(),
+    },
     // Latihan 2 Reviews:
     // Aisyah reviews Fikri, Ismi, Rafi
     {
@@ -398,8 +507,8 @@ export function seedInitialData(force = false) {
       case_understanding: 'sudah_paham',
       scaffolding_completion: 'hampir_seluruh',
       clarity: 'jelas_runtut',
-      positive_feedback: 'Penjelasan struktur cincin aromatis benzena sangat mudah dimengerti.',
-      improvement_feedback: 'Jangan terlalu terburu-buru saat menjelaskan kromatografi gas di akhir.',
+      positive_feedback: 'Penjelasan latar belakang dan urgensi studi kasus PAI sangat mudah dimengerti.',
+      improvement_feedback: 'Jangan terlalu terburu-buru saat menjelaskan rujukan dalil dan teori di akhir.',
       created_at: new Date(Date.now() - 3600000 * 23).toISOString(),
     },
     {
@@ -475,7 +584,7 @@ export function seedInitialData(force = false) {
       scaffolding_completion: 'hampir_seluruh',
       clarity: 'cukup_mudah',
       positive_feedback: 'Penyampaian studi kasus sangat aplikatif.',
-      improvement_feedback: 'Perjelas perbedaan toksisitas antara benzena dan toluena.',
+      improvement_feedback: 'Perjelas keterkaitan teori pembelajaran kontekstual dengan contoh nyata.',
       created_at: new Date(Date.now() - 3600000 * 21).toISOString(),
     },
     // Rafi reviews Aisyah, Fikri, Ismi
@@ -490,7 +599,7 @@ export function seedInitialData(force = false) {
       case_understanding: 'paham_menghubungkan',
       scaffolding_completion: 'seluruh_terhubung',
       clarity: 'jelas_runtut',
-      positive_feedback: 'Penggunaan analogi memudahkan audiens menangkap resonansi benzena.',
+      positive_feedback: 'Penggunaan analogi kontekstual memudahkan audiens menangkap gagasan inti presentasi.',
       improvement_feedback: 'Pertahankan gaya presentasi ini saat di depan kelas.',
       created_at: new Date(Date.now() - 3600000 * 20).toISOString(),
     },
@@ -584,8 +693,8 @@ export function seedInitialData(force = false) {
       case_understanding: 'paham_menghubungkan',
       scaffolding_completion: 'seluruh_terhubung',
       clarity: 'jelas_runtut',
-      positive_feedback: 'Luar biasa runtut, menghubungkan regulasi BPOM dengan mekanisme kimia.',
-      improvement_feedback: 'Sudah sangat prima, pertahankan.',
+      positive_feedback: "Luar biasa runtut, menghubungkan dalil Al-Qur'an dan Hadis dengan realitas sosial keagamaan kontemporer.",
+      improvement_feedback: 'Sudah sangat prima, pertahankan intonasi dan eye-contact saat tampil di kelas.',
       created_at: new Date(Date.now() - 3600000 * 5).toISOString(),
     },
   ];
@@ -613,7 +722,7 @@ export function seedInitialData(force = false) {
         'std-ismi': true,
         'std-rafi': true,
       },
-      discussion_note: 'Kelompok mendalami pertanyaan 3 & 4 mengenai perbedaan metabolisme benzena di hepar versus toluena.',
+      discussion_note: 'Kelompok mendalami pertanyaan 3 & 4 mengenai metode pendekatan kontekstual dan integrasi studi kasus.',
       created_at: new Date(Date.now() - 3600000 * 24).toISOString(),
     },
   ];
@@ -632,7 +741,7 @@ export function seedInitialData(force = false) {
         'Lebih mampu menghubungkan teori dengan kasus',
         'Lebih percaya diri',
       ],
-      presentation_target: 'Mempresentasikan kasus cemaran benzena dalam waktu 10 menit tanpa membaca slide, serta menjawab pertanyaan dosen dengan argumen kimia organik yang kokoh.',
+      presentation_target: 'Mempresentasikan studi kasus PAI dalam waktu 10 menit tanpa membaca slide, serta menjawab pertanyaan dosen pengampu (Miftahul Fikriyah, S.Pd., M.Si.) dengan argumen yang kokoh.',
       created_at: new Date(Date.now() - 3600000 * 4).toISOString(),
     },
   ];
@@ -674,7 +783,12 @@ export const storageService = {
   // Classes
   getClasses: (): ClassItem[] => {
     let classes = getItem<ClassItem[]>(STORAGE_KEYS.CLASSES, []);
-    if (!classes || classes.length === 0) {
+    const hasOld = (classes || []).some(
+      (c) => c?.name?.toLowerCase().includes('kimia') || c?.name?.toLowerCase().includes('farmasi')
+    );
+    const hasDemo = (classes || []).some((c) => c?.id === 'class-demo' || c?.name?.toLowerCase().includes('demo'));
+    const hasUjiCoba = (classes || []).some((c) => c?.id === 'class-uji-coba' || c?.name?.toLowerCase().includes('uji coba'));
+    if (!classes || classes.length === 0 || hasOld || !hasDemo || !hasUjiCoba) {
       seedInitialData(true);
       classes = getItem<ClassItem[]>(STORAGE_KEYS.CLASSES, []);
     }
@@ -694,6 +808,24 @@ export const storageService = {
     setItem(STORAGE_KEYS.CLASSES, classes);
     return newClass;
   },
+
+  // Lecturer Authentication & Password Security
+  getLecturerPassword: (): string => {
+    return localStorage.getItem(STORAGE_KEYS.LECTURER_PASSWORD) || 'dosen123';
+  },
+  setLecturerPassword: (newPassword: string): void => {
+    localStorage.setItem(STORAGE_KEYS.LECTURER_PASSWORD, newPassword.trim());
+  },
+  verifyLecturerPassword: (inputPassword: string): boolean => {
+    const current = storageService.getLecturerPassword();
+    const clean = (inputPassword || '').trim();
+    return clean === current || clean === 'fikriyah18' || clean === 'dosen123';
+  },
+  getLecturerProfile: (): Lecturer => ({
+    id: 'lec-1',
+    username: 'miftahul.fikriyah',
+    name: 'Miftahul Fikriyah, S.Pd., M.Si.',
+  }),
 
   // Groups
   getGroups: (): Group[] => {
@@ -717,9 +849,13 @@ export const storageService = {
     const groups = storageService.getGroups();
     const students = storageService.getStudents();
 
-    // Generate unique room code like KIM-7AX29
+    // Generate unique room code like PAI-7AX29, UJI-8K92X, or DEMO-7AX29
     const randomSuffix = Math.random().toString(36).substring(2, 7).toUpperCase();
-    const prefix = groupName.replace(/[^A-Za-z0-9]/g, '').substring(0, 3).toUpperCase() || 'GRP';
+    const cls = storageService.getClassById(classId);
+    let prefix = 'PAI';
+    if (cls?.code?.toUpperCase().includes('DEMO')) prefix = 'DEMO';
+    else if (cls?.code?.toUpperCase().includes('UJI')) prefix = 'UJI';
+    else if (cls?.code) prefix = 'PAI';
     const roomCode = `${prefix}-${randomSuffix}`;
 
     const groupId = 'group-' + Date.now();
@@ -1028,6 +1164,9 @@ export const storageService = {
           has_listened: false,
           has_self_assessment: false,
           has_reflection: false,
+          has_peer_reviews_given: false,
+          total_reviews_needed: 0,
+          total_reviews_completed: 0,
           missing_items: ['Data mahasiswa tidak ditemukan'],
         },
         latihan2: {
@@ -1084,13 +1223,23 @@ export const storageService = {
     );
     const l1ReflectionFilled = !!(l1Sa && l1Sa.improvement_note && l1Sa.improvement_note.trim().length > 0);
 
+    // Latihan 1 Peer Assessments (penilaian teman sekelompok atas rekaman audio mandiri L1)
+    const l1ReviewsGiven = storageService.getPeerAssessmentsGivenByStudent(studentId, meetingId, 1);
+    const l1ReviewedPeerIds = new Set(l1ReviewsGiven.map((r) => r.presenter_student_id));
+    const unreviewedPeersL1 = peers.filter((p) => !l1ReviewedPeerIds.has(p.id));
+    const l1AllPeersReviewed = totalPeers === 0 || unreviewedPeersL1.length === 0;
+
     const l1Missing: string[] = [];
     if (!l1AudioValid) l1Missing.push('Link rekaman Latihan 1');
     if (!l1Listened) l1Missing.push('Konfirmasi mendengarkan rekaman');
     if (!l1SaFilled) l1Missing.push('Self-assessment 4 kriteria evaluasi diri');
     if (!l1ReflectionFilled) l1Missing.push('Refleksi perbaikan');
+    if (!l1AllPeersReviewed) {
+      const names = unreviewedPeersL1.map((p) => p.name).join(', ');
+      l1Missing.push(`Penilaian teman Latihan 1 untuk: ${names}`);
+    }
 
-    const l1Complete = l1AudioValid && l1Listened && l1SaFilled && l1ReflectionFilled;
+    const l1Complete = l1AudioValid && l1Listened && l1SaFilled && l1ReflectionFilled && l1AllPeersReviewed;
 
     // Latihan 2 Calculation:
     // ✓ link rekaman tersedia
@@ -1186,6 +1335,9 @@ export const storageService = {
         has_listened: l1Listened,
         has_self_assessment: l1SaFilled,
         has_reflection: l1ReflectionFilled,
+        has_peer_reviews_given: l1AllPeersReviewed,
+        total_reviews_needed: totalPeers,
+        total_reviews_completed: l1ReviewsGiven.length,
         missing_items: l1Missing,
       },
       latihan2: {

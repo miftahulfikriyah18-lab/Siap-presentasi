@@ -134,34 +134,18 @@ export const Latihan2Form: React.FC<Latihan2FormProps> = ({
     e.preventDefault();
     setUrlError('');
 
-    if (recordingMode === 'single') {
-      const val = validateDriveUrl(singleDriveUrl);
-      if (!val.isValid) {
-        setUrlError(val.message || 'Link Drive tidak valid.');
-        return;
-      }
-    } else {
-      const urls = Object.values(perQuestionUrls).filter((u): u is string => typeof u === 'string' && u.trim().length > 0);
-      if (urls.length === 0) {
-        setUrlError('Masukkan minimal 1 link rekaman Drive.');
-        return;
-      }
-      for (const u of urls) {
-        const val = validateDriveUrl(u);
-        if (!val.isValid) {
-          setUrlError(val.message || 'Link Drive tidak valid.');
-          return;
-        }
-      }
+    const val = validateDriveUrl(singleDriveUrl);
+    if (!val.isValid) {
+      setUrlError(val.message || 'Link Drive tidak valid.');
+      return;
     }
 
     storageService.saveAudioSubmission({
       student_id: student.id,
       meeting_id: meeting.id,
       practice_number: 2,
-      recording_mode: recordingMode,
-      drive_url: recordingMode === 'single' ? singleDriveUrl.trim() : undefined,
-      per_question_urls: recordingMode === 'per_question' ? perQuestionUrls : undefined,
+      recording_mode: 'single',
+      drive_url: singleDriveUrl.trim(),
       photo_url: photoUrl.trim() || undefined,
     });
 
@@ -438,105 +422,39 @@ export const Latihan2Form: React.FC<Latihan2FormProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-              Format Rekaman
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setRecordingMode('single')}
-                className={`p-3.5 rounded-xl border text-left cursor-pointer transition-colors ${
-                  recordingMode === 'single'
-                    ? 'bg-blue-50/60 border-blue-600 text-blue-900 font-bold ring-1 ring-blue-600'
-                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                <span className="block text-xs font-bold">○ Satu rekaman lengkap</span>
-                <span className="text-[11px] text-slate-500 font-normal">
-                  Satu link Google Drive untuk seluruh sesi presentasi.
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setRecordingMode('per_question')}
-                className={`p-3.5 rounded-xl border text-left cursor-pointer transition-colors ${
-                  recordingMode === 'per_question'
-                    ? 'bg-blue-50/60 border-blue-600 text-blue-900 font-bold ring-1 ring-blue-600'
-                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                <span className="block text-xs font-bold">○ Rekaman terpisah berdasarkan pertanyaan</span>
-                <span className="text-[11px] text-slate-500 font-normal">
-                  Link terpisah per poin scaffolding.
-                </span>
-              </button>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                Link Google Drive Rekaman Latihan 2
+              </label>
+              {singleDriveUrl && (
+                <a
+                  href={singleDriveUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[11px] font-bold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
+                >
+                  <span>Uji / Buka Link Drive</span>
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              )}
             </div>
+            <input
+              type="url"
+              value={singleDriveUrl}
+              onChange={(e) => {
+                setSingleDriveUrl(e.target.value);
+                setUrlError('');
+              }}
+              placeholder="https://drive.google.com/file/d/..."
+              className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-xs sm:text-sm font-mono"
+              required
+            />
+            <p className="text-[11px] text-slate-500 mt-1.5">
+              Pastikan hak akses link Google Drive diatur ke <strong>"Siapa saja yang memiliki link dapat melihat"</strong> agar teman sekelompok dan dosen dapat mendengarkan rekaman latihan Anda.
+            </p>
           </div>
-
-          {recordingMode === 'single' ? (
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Link Google Drive Rekaman Latihan 2
-                </label>
-                {singleDriveUrl && (
-                  <a
-                    href={singleDriveUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[11px] font-bold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
-                  >
-                    <span>Uji / Buka Link Drive</span>
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </a>
-                )}
-              </div>
-              <input
-                type="url"
-                value={singleDriveUrl}
-                onChange={(e) => {
-                  setSingleDriveUrl(e.target.value);
-                  setUrlError('');
-                }}
-                placeholder="https://drive.google.com/file/d/..."
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-xs sm:text-sm font-mono"
-                required
-              />
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <span className="text-xs font-bold text-slate-800 block mb-1">Pembukaan Kasus:</span>
-                <input
-                  type="url"
-                  value={perQuestionUrls['intro'] || ''}
-                  onChange={(e) => setPerQuestionUrls({ ...perQuestionUrls, intro: e.target.value })}
-                  placeholder="https://drive.google.com/file/d/..."
-                  className="w-full px-3 py-2 bg-white rounded-lg border border-slate-300 text-xs font-mono"
-                  required
-                />
-              </div>
-              {questions.map((q, idx) => (
-                <div key={q.id || idx} className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                  <span className="text-xs font-bold text-slate-800 block mb-1">
-                    Pertanyaan {idx + 1}: {q.question_text}
-                  </span>
-                  <input
-                    type="url"
-                    value={perQuestionUrls[q.id || `q-${idx}`] || ''}
-                    onChange={(e) =>
-                      setPerQuestionUrls({ ...perQuestionUrls, [q.id || `q-${idx}`]: e.target.value })
-                    }
-                    placeholder="https://drive.google.com/file/d/..."
-                    className="w-full px-3 py-2 bg-white rounded-lg border border-slate-300 text-xs font-mono"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
 
           {/* TEMPAT MENGIRIM FOTO BUKTI MANDIRI (LATIHAN 2) */}
           <div className="pt-2 border-t border-slate-100">
@@ -625,6 +543,42 @@ export const Latihan2Form: React.FC<Latihan2FormProps> = ({
                   </span>
                 )}
               </div>
+
+              {/* TAUTAN GOOGLE DRIVE REKAMAN TEMAN */}
+              {(() => {
+                const peerAudio = storageService.getAudioSubmission(currentPeer.id, meeting.id, 2);
+                return (
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <span className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
+                          Tautan Rekaman Google Drive {currentPeer.name} (Latihan 2):
+                        </span>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Dengarkan atau lihat rekaman presentasi kelompok teman Anda di Google Drive sebelum menilai.
+                        </p>
+                      </div>
+                      {peerAudio?.drive_url ? (
+                        <a
+                          href={peerAudio.drive_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs shrink-0 cursor-pointer"
+                        >
+                          <span>▶ Buka Rekaman Google Drive</span>
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        </a>
+                      ) : (
+                        <span className="text-xs text-amber-800 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200 font-semibold shrink-0">
+                          ⚠️ {currentPeer.name} belum mengunggah link rekaman
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {peerNotice && (
                 <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold animate-in fade-in">

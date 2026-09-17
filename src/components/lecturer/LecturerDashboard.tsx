@@ -32,7 +32,12 @@ export const LecturerDashboard: React.FC<LecturerDashboardProps> = ({
   // Group evidence modal
   const [selectedGroupEvidenceModal, setSelectedGroupEvidenceModal] = useState<Group | null>(null);
 
-  const activeMeeting = meetings.find((m) => m?.id === selectedMeetingId) || meetings[0];
+  // Change Password modal for Lecturer
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+
+  const classMeetings = meetings.filter((m) => m?.class_id === selectedClassId);
+  const displayMeetings = classMeetings.length > 0 ? classMeetings : meetings;
+  const activeMeeting = displayMeetings.find((m) => m?.id === selectedMeetingId) || displayMeetings[0];
   const groupsInClass = selectedClassId ? storageService.getGroupsByClassId(selectedClassId) : [];
 
   // Gather all students in class
@@ -119,12 +124,26 @@ export const LecturerDashboard: React.FC<LecturerDashboardProps> = ({
                 onChange={(e) => onSelectMeeting(e.target.value)}
                 className="text-xs font-bold text-slate-800 bg-slate-50 border border-slate-300 rounded-xl px-3 py-2"
               >
-                {meetings.map((m) => (
+                {displayMeetings.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.title}
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-slate-500 uppercase">Keamanan</label>
+              <button
+                type="button"
+                onClick={() => setIsPasswordModalOpen(true)}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+              >
+                <svg className="w-3.5 h-3.5 text-emerald-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <span>Ganti Password Dosen</span>
+              </button>
             </div>
           </div>
         </div>
@@ -562,6 +581,14 @@ export const LecturerDashboard: React.FC<LecturerDashboardProps> = ({
           onClose={() => setSelectedGroupEvidenceModal(null)}
         />
       )}
+
+      {/* CHANGE LECTURER PASSWORD MODAL */}
+      {isPasswordModalOpen && (
+        <ChangeLecturerPasswordModal
+          isOpen={isPasswordModalOpen}
+          onClose={() => setIsPasswordModalOpen(false)}
+        />
+      )}
     </div>
   );
 };
@@ -940,6 +967,173 @@ const GroupEvidenceLecturerModal: React.FC<GroupEvidenceModalProps> = ({
           >
             Tutup
           </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Sub-component: Change Lecturer Password Modal
+interface ChangeLecturerPasswordModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const ChangeLecturerPasswordModal: React.FC<ChangeLecturerPasswordModalProps> = ({
+  isOpen,
+  onClose,
+}) => {
+  const [currentPwd, setCurrentPwd] = useState('');
+  const [newPwd, setNewPwd] = useState('');
+  const [confirmPwd, setConfirmPwd] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+
+  if (!isOpen) return null;
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    if (!currentPwd.trim()) {
+      setErrorMsg('Masukkan password dosen saat ini.');
+      return;
+    }
+
+    if (!storageService.verifyLecturerPassword(currentPwd)) {
+      setErrorMsg('Password saat ini tidak cocok.');
+      return;
+    }
+
+    if (newPwd.trim().length < 4) {
+      setErrorMsg('Password baru minimal 4 karakter.');
+      return;
+    }
+
+    if (newPwd !== confirmPwd) {
+      setErrorMsg('Konfirmasi password baru tidak cocok.');
+      return;
+    }
+
+    storageService.setLecturerPassword(newPwd.trim());
+    setSuccessMsg('Password berhasil diperbarui! Hanya Anda yang mengetahui password ini sekarang.');
+    setTimeout(() => {
+      onClose();
+    }, 1500);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div className="p-5 bg-slate-900 text-white flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-emerald-600/30 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block">
+                Keamanan Akun
+              </span>
+              <h3 className="text-base font-bold">Ubah Password Dosen</h3>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="p-6">
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl mb-4 text-xs text-slate-600 leading-relaxed">
+            Dosen Pengampu: <strong className="text-slate-900">Miftahul Fikriyah, S.Pd., M.Si.</strong>
+            <br />
+            Pastikan password baru disimpan dengan aman dan hanya diketahui oleh Anda.
+          </div>
+
+          {errorMsg && (
+            <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
+              {errorMsg}
+            </div>
+          )}
+
+          {successMsg && (
+            <div className="mb-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
+              {successMsg}
+            </div>
+          )}
+
+          <form onSubmit={handleSave} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                Password Saat Ini
+              </label>
+              <input
+                type="password"
+                value={currentPwd}
+                onChange={(e) => setCurrentPwd(e.target.value)}
+                placeholder="Masukkan password saat ini"
+                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                Password Baru
+              </label>
+              <input
+                type="password"
+                value={newPwd}
+                onChange={(e) => setNewPwd(e.target.value)}
+                placeholder="Masukkan password baru yang rahasia"
+                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                Ulangi Password Baru
+              </label>
+              <input
+                type="password"
+                value={confirmPwd}
+                onChange={(e) => setConfirmPwd(e.target.value)}
+                placeholder="Konfirmasi password baru"
+                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
+                required
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl cursor-pointer shadow-xs"
+              >
+                Simpan Password Baru
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>

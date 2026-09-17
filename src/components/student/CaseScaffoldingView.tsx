@@ -40,13 +40,13 @@ export const CaseScaffoldingView: React.FC<CaseScaffoldingViewProps> = ({
       } else {
         // Default 7 template questions if none
         setQuestions([
-          { question_text: 'Apa latar belakang masalah dan konsep kimia utama dalam kasus ini?' },
-          { question_text: 'Bagaimana karakteristik struktur molekul dan reaktivitas senyawa terkait?' },
-          { question_text: 'Jelaskan kemungkinan jalur mekanisme reaksi yang terjadi!' },
-          { question_text: 'Apa metode pengujian atau analisis instrumen yang tepat?' },
-          { question_text: 'Bagaimana interpretasi data hasil pengujian tersebut?' },
-          { question_text: 'Apa risiko atau dampak yang mungkin ditimbulkan jika tidak ditangani?' },
-          { question_text: 'Solusi teknis apa yang Anda rekomendasikan dan apa dasar ilmiahnya?' },
+          { question_text: 'Apa latar belakang masalah dan konsep utama Pendidikan Agama Islam dalam studi kasus ini?' },
+          { question_text: 'Bagaimana analisis sumber dalil (Al-Qur\'an & Hadis) serta pandangan ulama terkait persoalan ini?' },
+          { question_text: 'Jelaskan faktor penyebab dan dinamika sosial keagamaan yang terjadi di masyarakat!' },
+          { question_text: 'Bagaimana telaah kritis terhadap fenomena tersebut dalam perspektif etika & aqidah Islam?' },
+          { question_text: 'Apa dampak terhadap generasi muda dan keharmonisan umat jika permasalahan ini dibiarkan?' },
+          { question_text: 'Rekomendasi solusi edukatif dan pendekatan dakwah apa yang paling tepat diterapkan?' },
+          { question_text: 'Bagaimana kesimpulan akhir dan refleksi moral-spiritual yang dapat diambil kelompok?' },
         ]);
       }
     } else {
@@ -175,7 +175,7 @@ export const CaseScaffoldingView: React.FC<CaseScaffoldingViewProps> = ({
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Contoh: Analisis Cemaran Benzena pada Produk Farmasi Cair"
+                placeholder="Contoh: Analisis Penerapan Nilai Moderasi Beragama dalam Masyarakat Multikultural"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-sm font-semibold"
                 required
               />

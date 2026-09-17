@@ -18,7 +18,7 @@ export const StudentAuthModal: React.FC<StudentAuthModalProps> = ({
   const [activeTab, setActiveTab] = useState<TabType>('join');
 
   // Join Room State
-  const [roomCodeInput, setRoomCodeInput] = useState('KIM-7AX29');
+  const [roomCodeInput, setRoomCodeInput] = useState('DEMO-7AX29');
   const [matchedGroup, setMatchedGroup] = useState<Group | null>(null);
   const [groupStudents, setGroupStudents] = useState<Student[]>([]);
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
@@ -26,8 +26,8 @@ export const StudentAuthModal: React.FC<StudentAuthModalProps> = ({
   const [confirmPinInput, setConfirmPinInput] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Create Room State
-  const [classNameInput, setClassNameInput] = useState('Kimia Organik');
+  // Create Room State - Classes Choice: PAI AL 5, PAI AL 3, PAI AL 2, Kelas Uji Coba, Kelas DEMO
+  const [classNameInput, setClassNameInput] = useState('PAI AL 5');
   const [groupNameInput, setGroupNameInput] = useState('');
   const [memberNames, setMemberNames] = useState<string[]>(['', '', '', '']);
   const [createdResult, setCreatedResult] = useState<{ group: Group; students: Student[] } | null>(null);
@@ -47,7 +47,7 @@ export const StudentAuthModal: React.FC<StudentAuthModalProps> = ({
 
     const group = storageService.getGroupByRoomCode(roomCodeInput);
     if (!group) {
-      setErrorMessage('Room Code tidak ditemukan. Pastikan kode sudah benar (contoh: KIM-7AX29).');
+      setErrorMessage('Room Code tidak ditemukan. Pastikan kode sudah benar (contoh: DEMO-7AX29 atau Room Code kelompok Anda).');
       setMatchedGroup(null);
       return;
     }
@@ -224,7 +224,7 @@ export const StudentAuthModal: React.FC<StudentAuthModalProps> = ({
                       type="text"
                       value={roomCodeInput}
                       onChange={(e) => setRoomCodeInput(e.target.value.toUpperCase())}
-                      placeholder="Contoh: KIM-7AX29"
+                      placeholder="Contoh: DEMO-7AX29 atau PAI-XXXXX"
                       className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-sm font-mono tracking-wider font-semibold placeholder:text-slate-400 uppercase"
                       required
                     />
@@ -234,15 +234,20 @@ export const StudentAuthModal: React.FC<StudentAuthModalProps> = ({
                   </div>
 
                   {/* Demo Shortcut Box */}
-                  <div className="p-3.5 bg-blue-50/60 rounded-xl border border-blue-100 text-xs text-slate-600">
-                    <span className="font-bold text-blue-900 block mb-1">Demo Kelas Kimia Organik:</span>
+                  <div className="p-3.5 bg-emerald-50/70 rounded-xl border border-emerald-200 text-xs text-slate-700">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="font-bold text-emerald-950">Data Contoh (Kelas DEMO):</span>
+                      <span className="text-[10px] text-emerald-800 font-semibold bg-emerald-100 px-2 py-0.5 rounded-full">
+                        Dosen: Miftahul Fikriyah, S.Pd., M.Si.
+                      </span>
+                    </div>
                     <div className="flex items-center justify-between">
-                      <span className="font-mono font-bold text-blue-800">Room Code: KIM-7AX29</span>
+                      <span className="font-mono font-bold text-emerald-900 text-sm">Room Code: DEMO-7AX29</span>
                       <button
                         type="button"
                         onClick={() => {
-                          setRoomCodeInput('KIM-7AX29');
-                          const grp = storageService.getGroupByRoomCode('KIM-7AX29');
+                          setRoomCodeInput('DEMO-7AX29');
+                          const grp = storageService.getGroupByRoomCode('DEMO-7AX29');
                           if (grp) {
                             setMatchedGroup(grp);
                             const st = storageService.getStudentsByGroupId(grp.id);
@@ -250,7 +255,7 @@ export const StudentAuthModal: React.FC<StudentAuthModalProps> = ({
                             if (st.length > 0) setSelectedStudentId(st[0].id);
                           }
                         }}
-                        className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-semibold text-[11px] cursor-pointer"
+                        className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg font-bold text-[11px] cursor-pointer shadow-xs transition-colors"
                       >
                         Pakai Demo Room
                       </button>
@@ -438,19 +443,56 @@ export const StudentAuthModal: React.FC<StudentAuthModalProps> = ({
                 </div>
               ) : (
                 <form onSubmit={handleCreateRoom} className="space-y-4">
-                  {/* Nama Kelas */}
+                  {/* Pilihan Kelas */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                      Nama Kelas
-                    </label>
-                    <input
-                      type="text"
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Pilihan Kelas
+                      </label>
+                      <span className="text-[11px] font-semibold text-emerald-700">
+                        Dosen: Miftahul Fikriyah, S.Pd., M.Si.
+                      </span>
+                    </div>
+
+                    {/* Quick Select Buttons - Tinggal Klik */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2">
+                      {[
+                        { name: 'PAI AL 5', label: 'Kelas 1' },
+                        { name: 'PAI AL 3', label: 'Kelas 2' },
+                        { name: 'PAI AL 2', label: 'Kelas 3' },
+                        { name: 'Kelas Uji Coba', label: 'Uji Coba' },
+                      ].map((item) => (
+                        <button
+                          key={item.name}
+                          type="button"
+                          onClick={() => setClassNameInput(item.name)}
+                          className={`py-2 px-2 rounded-xl text-xs font-bold transition-all border text-center cursor-pointer flex flex-col items-center justify-center ${
+                            classNameInput === item.name
+                              ? 'bg-emerald-700 text-white border-emerald-800 shadow-xs'
+                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          <span className="text-[10px] opacity-75">{item.label}</span>
+                          <span className="font-extrabold truncate w-full">{item.name}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    <select
                       value={classNameInput}
                       onChange={(e) => setClassNameInput(e.target.value)}
-                      placeholder="Contoh: Kimia Organik"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-sm font-medium"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-sm font-semibold bg-white cursor-pointer"
                       required
-                    />
+                    >
+                      <option value="PAI AL 5">1. PAI AL 5 (Kelas Mahasiswa)</option>
+                      <option value="PAI AL 3">2. PAI AL 3 (Kelas Mahasiswa)</option>
+                      <option value="PAI AL 2">3. PAI AL 2 (Kelas Mahasiswa)</option>
+                      <option value="Kelas Uji Coba">4. Kelas Uji Coba (Khusus Uji Coba Mandiri / Dosen)</option>
+                      <option value="Kelas DEMO">5. Kelas DEMO (Data Simulasi)</option>
+                    </select>
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      Pilih kelas di atas agar kelompok otomatis masuk ke daftar kelas dosen pengampu.
+                    </p>
                   </div>
 
                   {/* Nama Kelompok */}

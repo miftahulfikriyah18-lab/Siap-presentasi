@@ -98,14 +98,14 @@ export interface SelfAssessment {
   created_at: string;
 }
 
-// Peer Assessment for Latihan 2 and Latihan 3
+// Peer Assessment for Latihan 1, Latihan 2, and Latihan 3
 export interface PeerAssessment {
   id: string;
   reviewer_student_id: string;
   presenter_student_id: string;
   meeting_id: string;
   practice_number: PracticeNumber;
-  text_dependency: 'membaca_seluruh' | 'membaca_sebagian' | 'hanya_poin' | 'tanpa_membaca';
+  text_dependency?: 'membaca_seluruh' | 'membaca_sebagian' | 'hanya_poin' | 'tanpa_membaca' | '';
   fluency: 'sering_tersendat' | 'beberapa_tersendat' | 'cukup_lancar' | 'lancar_runtut';
   case_understanding: 'belum_paham' | 'paham_sebagian' | 'sudah_paham' | 'paham_menghubungkan';
   scaffolding_completion: 'banyak_belum' | 'sebagian' | 'hampir_seluruh' | 'seluruh_terhubung';
@@ -163,6 +163,9 @@ export interface StudentMeetingProgress {
     has_listened: boolean;
     has_self_assessment: boolean;
     has_reflection: boolean;
+    has_peer_reviews_given: boolean;
+    total_reviews_needed: number;
+    total_reviews_completed: number;
     missing_items: string[];
   };
   latihan2: {
