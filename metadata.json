@@ -1,0 +1,7 @@
+{
+  "name": "SIAP PRESENTASI",
+  "description": "Sistem Latihan Presentasi Bertahap Mahasiswa - Latihan, Evaluasi, Perbaiki, dan Pantau Kesiapan Presentasi Akademik.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
